@@ -64,11 +64,10 @@ public class ClientConsole implements ChatIF {
             BufferedReader fromConsole =
                     new BufferedReader(new InputStreamReader(System.in));
             String message;
-
             while (true) {
                 message = fromConsole.readLine();
                 if (!message.startsWith("#")) {
-                    client.handleMessageFromClientUI(message);
+                    client.handleMessageFromClientUI("> " + message);
                 } else {
                     message = message.substring(1);
                     if (message.equals("quit")) {
@@ -102,7 +101,7 @@ public class ClientConsole implements ChatIF {
                             try {
                                 client.openConnection();
                             } catch (Exception e) {
-                                System.out.println("Unable to connect to port " + client.getPort() + " and host" + client.getHost() +". Connecting to default port " + DEFAULT_PORT + " and default host localhost");
+                                System.out.println("Unable to connect to port " + client.getPort() + " and host" + client.getHost() + ". Connecting to default port " + DEFAULT_PORT + " and default host localhost");
                                 client.setPort(DEFAULT_PORT);
                                 client.setHost("localhost");
                                 client.openConnection();
@@ -112,6 +111,16 @@ public class ClientConsole implements ChatIF {
                         System.out.println("The current host name is: " + client.getHost());
                     } else if (message.equals("getport")) {
                         System.out.println("The current port is: " + client.getPort());
+                    } else if (message.equals("help")) {
+                        System.out.println("#quit: Client terminates.");
+                        System.out.println("#logoff: Connection to server terminates.");
+                        System.out.println("#sethost <host>: Set a new host name.");
+                        System.out.println("#setport <port>: Set a new port address.");
+                        System.out.println("#login: Connect to server.");
+                        System.out.println("#gethost: Returns host name.");
+                        System.out.println("#getport: Returns port address.");
+                    } else {
+                        System.out.println("Unrecognized command. For help type #help");
                     }
                 }
 
@@ -129,7 +138,11 @@ public class ClientConsole implements ChatIF {
      * @param message The string to be displayed.
      */
     public void display(String message) {
-        System.out.println("> " + message);
+        if (message.equals("#quit")) {
+            client.quit();
+        } else {
+            System.out.println(message);
+        }
     }
 
 

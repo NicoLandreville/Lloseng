@@ -87,7 +87,7 @@ public class ChatClient extends AbstractClient {
     /**
      * This method disconnects the client.
      */
-    public void logOff(){
+    public void logOff() {
         try {
             closeConnection();
         } catch (IOException e) {

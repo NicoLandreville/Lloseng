@@ -4,6 +4,7 @@
 
 import java.io.*;
 
+import common.ChatIF;
 import ocsf.server.*;
 
 /**
@@ -16,7 +17,7 @@ import ocsf.server.*;
  * @author Paul Holden
  * @version July 2000
  */
-public class EchoServer extends AbstractServer {
+public class EchoServer extends AbstractServer implements ChatIF {
     //Class variables *************************************************
 
     /**
@@ -39,6 +40,75 @@ public class EchoServer extends AbstractServer {
     //Instance methods ************************************************
 
     /**
+     * The void speaketh
+     */
+    public void serverConsole() {
+        try {
+            BufferedReader fromConsole =
+                    new BufferedReader(new InputStreamReader(System.in));
+            String message;
+
+            while (true) {
+                message = fromConsole.readLine();
+                if (!message.startsWith("#")) {
+                    display(message);
+                } else {
+                    message = message.substring(1);
+                    if (message.equals("quit")) {
+                        this.close();
+                        System.exit(0);
+                    } else if (message.equals("stop")) {
+                        this.stopListening();
+                    } else if (message.startsWith("setport ")) {
+                        if ((this.getNumberOfClients() != 0) | (this.isListening())) {
+                            System.out.println("Please close server first.");
+                        } else {
+                            try {
+                                message = message.substring(8);
+                                this.setPort(Integer.parseInt(message));
+                            } catch (NumberFormatException e) {
+                                System.out.println("Invalid input. Using default port");
+                                this.setPort(DEFAULT_PORT);
+                            }
+                        }
+                    } else if (message.equals("close")) {
+                        this.stopListening();
+                        sendToAllClients("#quit");
+                    } else if (message.equals("start")) {
+                        if (this.isListening()) {
+                            System.out.println("Server is already listening");
+                        } else {
+                            this.listen();
+                        }
+                    } else if (message.equals("getport")) {
+                        System.out.println(getPort());
+                    } else if (message.equals("help")) {
+                        System.out.println("#quit: Server terminates.");
+                        System.out.println("#stop: Server no longer listens for new connections.");
+                        System.out.println("#start: Server will listen for connections.");
+                        System.out.println("#close: Server stops listening and terminates all clients.");
+                        System.out.println("#setport <port>: Set a new port address.");
+                        System.out.println("#getport: Returns port address.");
+
+                    } else {
+                        System.out.println("Unrecognized command. For help type #help");
+                    }
+
+                }
+
+            }
+        } catch (Exception ex) {
+            System.out.println
+                    ("Unexpected error while reading from console!");
+        }
+    }
+
+    public void display(String message) {
+        System.out.println("SERVER MSG > " + message);
+        this.sendToAllClients("SERVER MSG > " + message);
+    }
+
+    /**
      * This method handles any messages received from the client.
      *
      * @param msg    The message received from the client.
@@ -46,7 +116,10 @@ public class EchoServer extends AbstractServer {
      */
     public void handleMessageFromClient
     (Object msg, ConnectionToClient client) {
-        System.out.println("Message received: " + msg + " from " + client);
+        String message;
+        message = msg.toString();
+        message = message.substring(2);
+        System.out.println("Message received: " + message + " from " + client);
         this.sendToAllClients(msg);
     }
 
@@ -107,6 +180,7 @@ public class EchoServer extends AbstractServer {
         } catch (Exception ex) {
             System.out.println("ERROR - Could not listen for clients!");
         }
+        sv.serverConsole();
     }
 }
 //End of EchoServer class
