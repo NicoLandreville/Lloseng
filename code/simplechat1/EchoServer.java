@@ -3,6 +3,7 @@
 // license found at www.lloseng.com 
 
 import java.io.*;
+import java.util.Arrays;
 
 import common.ChatIF;
 import ocsf.server.*;
@@ -24,7 +25,12 @@ public class EchoServer extends AbstractServer implements ChatIF {
      * The default port to listen on.
      */
     final public static int DEFAULT_PORT = 5555;
+    //Instance variables *************************************************
 
+    /**
+     * The default port to listen on.
+     */
+    Arrays clients;
     //Constructors ****************************************************
 
     /**
@@ -114,13 +120,34 @@ public class EchoServer extends AbstractServer implements ChatIF {
      * @param msg    The message received from the client.
      * @param client The connection from which the message originated.
      */
-    public void handleMessageFromClient
-    (Object msg, ConnectionToClient client) {
+    public void handleMessageFromClient(Object msg, ConnectionToClient client) {
         String message;
         message = msg.toString();
-        message = message.substring(2);
-        System.out.println("Message received: " + message + " from " + client);
-        this.sendToAllClients(msg);
+        if (message.startsWith("#login ")) {
+            if (client.getInfo("logInID") == null) {
+                String logInID = message.substring(7);
+                client.setInfo("logInID", logInID);
+            } else {
+                try {
+                    client.sendToClient("You are already logged in.");
+                } catch (Exception e) {
+                }
+            }
+        } else {
+            if (client.getInfo("logInID") == null) {
+                try {
+                    client.sendToClient("No log-in ID detected. Terminating client");
+                    client.close();
+                } catch (Exception e) {
+                }
+                return;
+            }
+            String logInID = String.valueOf(client.getInfo("logInID"));
+            //message = message.substring(4); //need to automatically detect size, not just 4
+            System.out.println("Message received: " + message + " from " + client + " with log-in ID " + logInID);
+
+            this.sendToAllClients(logInID + " > " + message);
+        }
     }
 
     protected void clientConnected(ConnectionToClient client) {
