@@ -56,33 +56,39 @@ public class EchoServer extends AbstractServer implements ChatIF {
 
             while (true) {
                 message = fromConsole.readLine();
-                if (!message.startsWith("#")) {
+                if (!message.startsWith("#")) {  //if message doesn't start with # it deals with it as a object to display
                     display(message);
                 } else {
-                    message = message.substring(1);
+                    message = message.substring(1); //removes the # from the string
                     if (message.equals("quit")) {
                         this.close();
+                        this.sendToAllClients("#quit");
                         System.exit(0);
                     } else if (message.equals("stop")) {
                         this.stopListening();
+                        sendToAllClients("WARNING - Server has stopped listening for connections."); //sends message from server side to be somewhat backwards compatible
                     } else if (message.startsWith("setport ")) {
-                        if ((this.getNumberOfClients() != 0) | (this.isListening())) {
+                        if (this.isListening()) {
                             System.out.println("Please close server first.");
                         } else {
                             try {
                                 message = message.substring(8);
                                 this.setPort(Integer.parseInt(message));
                             } catch (NumberFormatException e) {
-                                System.out.println("Invalid input. Using default port");
+                                System.out.println("Invalid input. Using default port.");
                                 this.setPort(DEFAULT_PORT);
                             }
+                            System.out.println("port set to: : " + getPort());
                         }
                     } else if (message.equals("close")) {
                         this.stopListening();
+                        sendToAllClients("SERVER SHUTTING DOWN! DISCONNECTING!");
+                        sendToAllClients("Abnormal termination of connection.");
                         sendToAllClients("#quit");
+                        this.close();
                     } else if (message.equals("start")) {
                         if (this.isListening()) {
-                            System.out.println("Server is already listening");
+                            System.out.println("Server is already listening.");
                         } else {
                             this.listen();
                         }
@@ -97,7 +103,7 @@ public class EchoServer extends AbstractServer implements ChatIF {
                         System.out.println("#getport: Returns port address.");
 
                     } else {
-                        System.out.println("Unrecognized command. For help type #help");
+                        System.out.println("Unrecognized command. For help type #help.");
                     }
 
                 }
@@ -109,6 +115,13 @@ public class EchoServer extends AbstractServer implements ChatIF {
         }
     }
 
+    /**
+     * This method overrides the method in the ChatIF interface. It
+     * displays a message onto the screen and sends the same message
+     * to be displayed by the clients.
+     *
+     * @param message
+     */
     public void display(String message) {
         System.out.println("SERVER MSG > " + message);
         this.sendToAllClients("SERVER MSG > " + message);
@@ -126,7 +139,10 @@ public class EchoServer extends AbstractServer implements ChatIF {
         if (message.startsWith("#login ")) {
             if (client.getInfo("logInID") == null) {
                 String logInID = message.substring(7);
+                System.out.println("Message received: " + message + " from " + client.getInfo("logInID"));
                 client.setInfo("logInID", logInID);
+                System.out.println(client.getInfo("logInID") + " has logged on");
+                sendToAllClients(client.getInfo("logInID") + " has logged on");
             } else {
                 try {
                     client.sendToClient("You are already logged in.");
@@ -136,7 +152,7 @@ public class EchoServer extends AbstractServer implements ChatIF {
         } else {
             if (client.getInfo("logInID") == null) {
                 try {
-                    client.sendToClient("No log-in ID detected. Terminating client");
+                    client.sendToClient("No log-in ID detected. Terminating client.");
                     client.close();
                 } catch (Exception e) {
                 }
@@ -150,15 +166,33 @@ public class EchoServer extends AbstractServer implements ChatIF {
         }
     }
 
+    /**
+     * This method is called every time a new client tries to connect
+     *
+     * @param client the connection connected to the client.
+     */
     protected void clientConnected(ConnectionToClient client) {
-        System.out.println("We welcome a new connection.");
+        System.out.println("A new client is attempting to connect to the server.");
     }
 
+    /**
+     * This method is called every time a client disconnects,
+     * also prints out the same message on all client consoles.
+     *
+     * @param client the connection with the client.
+     */
     synchronized protected void clientDisconnected(
             ConnectionToClient client) {
-        System.out.println("Sad to see a client leave");
+        System.out.println(client.getInfo("logInID") + " has disconnected");
+        this.sendToAllClients(client.getInfo("logInID") + " has disconnected");
     }
 
+    /**
+     * Calls a method in the client that reacts to an unexpected quitting from the server
+     *
+     * @param client the client that raised the exception.
+     * @param exception
+     */
     synchronized protected void clientException(
             ConnectionToClient client, Throwable exception) {
         clientDisconnected(client);
@@ -191,6 +225,7 @@ public class EchoServer extends AbstractServer implements ChatIF {
      * @param args[0] The port number to listen on.  Defaults to 5555
      *                if no argument is entered.
      */
+    @SuppressWarnings("JavadocReference")
     public static void main(String[] args) {
         int port = 0; //Port to listen on
 

@@ -43,8 +43,6 @@ public class ChatClient extends AbstractClient {
         super(host, port); //Call the superclass constructor
         this.clientUI = clientUI;
         this.logInID = logInID;
-        openConnection();
-        this.sendToServer("#login " + logInID);
     }
 
 
@@ -96,13 +94,50 @@ public class ChatClient extends AbstractClient {
         }
     }
 
+    /**
+     * This method sets a new login ID
+     * @param logInID
+     */
+    public void setLogInID(String logInID) {
+        this.logInID = logInID;
+    }
+
+    /**
+     * this method returns the login ID
+     * @return
+     */
+    public String getLogInID() {
+        return logInID;
+    }
+
+    /**
+     * This method displays a message when the connection closes between a client and a server
+     */
     public void connectionClosed() {
         clientUI.display("Connection closed.");
     }
 
+    /**
+     * this method displays a  message when the server shuts down unexpectedly and terminates the client
+     * @param e
+     */
     public void connectionException(Exception e) {
         clientUI.display("Server has shut down.");
-        quit();
+        quit(); //can be modified to disconnect instead of quiting by switching quit() with logOff()
+    }
+
+    /**
+     * this method open's the connection to the server. This was separated
+     * from the constructor to allow the creation of a client without
+     * it being connected to the server.
+     */
+    public void connectClient() {
+        try {
+            openConnection();
+            this.sendToServer("#login " + logInID);
+        }catch (Exception e){
+            clientUI.display("Cannot open connection.  Awaiting command.");
+        }
     }
 }
 //End of ChatClient class
