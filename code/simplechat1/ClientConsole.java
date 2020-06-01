@@ -171,20 +171,20 @@ public class ClientConsole implements ChatIF {
         String host = "";
         int port = 0;  //The port number
         try {
-            logInID = args[0];
+            logInID = args[0]; //get log
         } catch (Exception e) {
             System.out.println("ERROR - No login ID specified.  Connection aborted.");
             System.exit(1);
         }
         try {
-            host = args[1];
+            host = args[1]; // Get host from command line
         } catch (ArrayIndexOutOfBoundsException e) {
             System.out.println("Invalid input. Using default host");
             host = "localhost";
         }
         System.out.println("Connecting to host: " + host);
         try {
-            String validPort = args[2];
+            String validPort = args[2]; //get port from command line
             port = Integer.parseInt(validPort);
 
         } catch (Exception e) {
